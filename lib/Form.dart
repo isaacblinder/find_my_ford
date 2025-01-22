@@ -6,7 +6,6 @@ import 'package:confetti/confetti.dart';
 class MyForm extends StatefulWidget {
   @override
   _MyFormState createState() => _MyFormState();
-
 }
 
 class _MyFormState extends State<MyForm> {
@@ -109,7 +108,6 @@ class _MyFormState extends State<MyForm> {
                 },
               ),
               SizedBox(height: 20.0),
-              CircularSliderWidget(),
               ConfettiWidget(
               confettiController: _controllerCenter,
               blastDirectionality: BlastDirectionality
@@ -135,44 +133,5 @@ class _MyFormState extends State<MyForm> {
         ),
       ),
     );
-  }
-}
-
-class CircularSliderWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SleekCircularSlider(
-          initialValue: 40, // Initial value
-          max: 100, // Maximum value
-          appearance: CircularSliderAppearance(
-            customColors: CustomSliderColors(
-              progressBarColors: [Colors.blue], // Customize progress bar colors
-              trackColor: Colors.grey, // Customize track color
-              shadowColor: Colors.green, // Customize shadow color
-              shadowMaxOpacity: 0.2, // Set shadow maximum opacity
-            ),
-            customWidths: CustomSliderWidths(
-              progressBarWidth: 12, // Set progress bar width
-              trackWidth: 12, // Set track width
-              shadowWidth: 20, // Set shadow width
-            ),
-            size: 150, // Set the slider's size
-            startAngle: 150, // Set the starting angle
-            angleRange: 240, // Set the angle range
-            infoProperties: InfoProperties(
-              // Customize label style
-              mainLabelStyle: TextStyle(fontSize: 24, color: Colors.blue), 
-              modifier: (double value) {
-                // Display value as a percentage
-                return '${value.toStringAsFixed(0)}%'; 
-              },
-            ),
-            spinnerMode: false, // Disable spinner mode
-            animationEnabled: true, // Enable animation
-          ),
-          onChange: (double value) {
-            // Handle value change here
-          },
-        );
   }
 }

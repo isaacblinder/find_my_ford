@@ -1,34 +1,47 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class  CarCarousel extends StatelessWidget {
+class  CarCarousel extends StatefulWidget {
+
+  @override
+  State<CarCarousel> createState() => _CarCarouselState();
+
+}
+
+class _CarCarouselState extends State<CarCarousel> {
+    List carList = [];
+
+    // retrieve data from firebase
+    void getData() async {
+      final ref = FirebaseDatabase.instance.ref();
+      final snapshot = await ref.child('cars/').get();
+      if (snapshot.exists) {
+          final data = snapshot.value;
+          if (data != null) {
+            setState(() {
+            carList = data as List;
+          });
+          } 
+          
+      } else {
+          print('No data available.');
+      }
+    }
+
+    @override
+    void initState() {
+      super.initState();
+      getData();
+    }
 
   @override
   Widget build(BuildContext context) {
     return ListView(
         children: [
           CarouselSlider(
-              items: [
-                CarouselItem(
-                  imgUrl: 'https://www.motortrend.com/uploads/sites/10/2023/03/2023-ford-explorer-xlt-suv-angular-front.png?w=768&width=768&q=75&format=webp',
-                  name: 'Ford Explorer',
-                  price: 35000,
-                  model: 2024,
-                  ),
-                CarouselItem(
-                  imgUrl: 'https://www.germainfordofbeavercreek.com/static/dealer-18421/Lineup-2410-Expedition.png',
-                  name: 'Ford Expedition',
-                  price: 25000,
-                  model: 2015,
-                  ),
-                CarouselItem(
-                  imgUrl: 'https://pictures.dealer.com/fd-DIG_IMAGES/f13154c6bef2d5ed3390079535f77423.png?w=640&impolicy=downsize_bkpt&imdensity=1',
-                  name: 'Ford F150',
-                  price: 60000,
-                  model: 2018,
-                ),
-              ],
+              items: [for (final value in carList) CarouselItem(car: Car.fromJson(Map<String, dynamic>.from (value as Map)))],
             
               options: CarouselOptions(
                 height: 800.0,
@@ -49,20 +62,14 @@ class  CarCarousel extends StatelessWidget {
 class CarouselItem extends StatelessWidget {
   const CarouselItem({
     super.key,
-    this.imgUrl = '',
-    this.price = 0,
-    this.name = '',
-    this.model = 0
+    required this.car
   });
 
-  final String imgUrl;
-  final int price;
-  final String name;
-  final int model;
+  final Car car;
 
   String get getFormattedPrice {
     var formatter = NumberFormat('#,##,000');
-    return '\$${formatter.format(price)}';
+    return '\$${formatter.format(car.price)}';
   }
   
   @override
@@ -78,7 +85,7 @@ class CarouselItem extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.0),
                 image: DecorationImage(
-                  image: NetworkImage(this.imgUrl),
+                  image: NetworkImage(car.imgUrl),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -87,8 +94,8 @@ class CarouselItem extends StatelessWidget {
             spacing: 12,
             children: [
               SizedBox(height: 19),
-              Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35, color: Theme.of(context).colorScheme.tertiaryContainer, shadows: [Shadow(color: Colors.grey, blurRadius: 5.0, offset: Offset(3.1, 3.1))])),
-              CarDetails(getFormattedPrice: getFormattedPrice, model: model)
+              Text(car.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35, color: Theme.of(context).colorScheme.tertiaryContainer, shadows: [Shadow(color: Colors.grey, blurRadius: 5.0, offset: Offset(3.1, 3.1))])),
+              CarDetails(getFormattedPrice: getFormattedPrice, car: car)
             ]
       ),
             ],
@@ -101,11 +108,11 @@ class CarDetails extends StatelessWidget {
   const CarDetails({
     super.key,
     required this.getFormattedPrice,
-    required this.model,
+    required this.car,
   });
 
   final String getFormattedPrice;
-  final int model;
+  final Car car;
 
   @override
   Widget build(BuildContext context) {
@@ -147,17 +154,17 @@ class CarDetails extends StatelessWidget {
                     ),
                     children: <TextSpan>[
                       TextSpan(text: 'Model: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      TextSpan(text: '$model'),
+                      TextSpan(text: '${car.model}'),
                     ],
                   ),
                 ),
               ),
                 SizedBox(height: 35),
-                RatingElement(rating: 4, attribute: 'Durability'),
-                RatingElement(rating: 3, attribute: 'Mileage'),
-                RatingElement(rating: 5, attribute: 'Steering'),
-                RatingElement(rating: 5, attribute: 'Towing'),
-                RatingElement(rating: 2, attribute: 'Resale Value'),
+                RatingElement(rating: car.durability, attribute: 'Durability'),
+                RatingElement(rating: car.mileage, attribute: 'Mileage'),
+                RatingElement(rating: car.steering, attribute: 'Steering'),
+                RatingElement(rating: car.towing, attribute: 'Towing'),
+                RatingElement(rating: car.resaleValue, attribute: 'Resale Value'),
             ],),
           ),
         ),
@@ -190,5 +197,45 @@ class RatingElement extends StatelessWidget {
         ),
       ],),
     );
+  }
+}
+
+
+// data types
+class Car {
+  final String imgUrl;
+  final int model;
+  final String name;
+  final int price;
+  final int durability;
+  final int mileage;
+  final int steering;
+  final int towing;
+  final int resaleValue;
+
+  const Car({
+    required this.imgUrl,
+    required this.model,
+    required this.name,
+    required this.price,
+    required this.durability,
+    required this.mileage,
+    required this.steering,
+    required this.towing,
+    required this.resaleValue,
+  });
+
+  factory Car.fromJson(Map<String, dynamic> json) {
+    return Car(
+          imgUrl: json['imgUrl'],
+          model: json["model"],
+          name: json["name"],
+          price: json["price"],
+          durability: json["durability"],
+          mileage: json["mileage"],
+          steering: json["steering"],
+          towing: json["towing"],
+          resaleValue: json["resaleValue"]
+        );
   }
 }
